@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title> Sign Up Page </title>
+<script src = "https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+
+
+
+<script>
+/*global $*/
+/*global stateAbb*/
+
+var usernameAvailable = false;
+var stateAbbIndex = 0;
+
+$(document).ready(function(){
+    // findStateAbb();
+    $("#zipCode").on("change", function(){
+       $.ajax({
+            method: "GET",
+            url: "https://cst336.herokuapp.com/projects/api/cityInfoAPI.php?zip=93955",
+            dataType: "json",
+            data: { "zip": $("#zipCode").val() },
+            success: function(result,status) {
+               // alert(result.city);
+               $("#city").html(result.city);
+               $("#latitude").html(result.latitude);
+               $("#longitude").html(result.longitude);
+            }
+        
+        });//ajax
+        
+    });
+    
+     
+    
+    //for states
+     
+        $.ajax({
+                
+                method: "GET",
+                url: "https://cst336.herokuapp.com/projects/api/state_abbrAPI.php",
+                dataType: "json",
+                data: { "state": $("#state").val() },
+              // $('#county').html("<option> Select one </opiton>");
+                success: function(result,status) {
+                   // $('#state').html("<option> Select one </opiton>");
+                    //alert(result);
+                    for(let i =0; i< result.length; i++){
+                        $("#state").append(`<option>${result[i].state}</optoin>`);
+                        //stateAbb = result[i].usps.toLowerCase();
+                        //findStateAbb();
+                    }
+                   // findStateAbb();
+                       
+                }
+               
+          
+            });//ajax
+    
+     
+    
+    
+    
+    //for county
+    $("#state").on("change", function(){
+        
+        findStateAbb();
+        
+        $('#stateAb').html(stateAbb);
+        $.ajax({
+
+                method: "GET",
+                url: "https://cst336.herokuapp.com/projects/api/countyListAPI.php",
+                dataType: "json",
+                data: { "state": stateAbb },
+               // $('#county').html("<option> Select one </opiton>");
+                success: function(result,status) {
+                    $('#county').html("<option> Select one </opiton>");
+                    //alert(result);
+                    for(let i =0; i< result.length; i++){
+                        $("#county").append(`<option>${result[i].county}</optoin>`);
+                    }
+                }
+
+            });//ajax
+    
+    });
+    
+    $("#username").on("change", function() {
+       // alert("help");
+        $.ajax({
+
+                method: "GET",
+                url: "https://cst336.herokuapp.com/projects/api/usernamesAPI.php?username=eeny",
+                dataType: "json",
+                data: { "username": $("#username").val() },
+                success: function(result,status) {
+                    if(result.available){
+                        $("#usernameError").html(" username is available");
+                        $("#usernameError").css("color","green");
+                        usernameAvailable = true;
+                    }else{
+                        $("#usernameError").html(" username is unavailable");
+                        $("#usernameError").css("color","red");
+                        usernameAvailable = false;
+                    }
+                  
+                }
+
+             });//ajax
+    });
+    
+    $("#signupForm").on("submit", function(event) {
+        //alert("Submitting form...");
+        if(!isFormValid()){
+             event.preventDefault();
+        }
+       
+    });
+    //validation method
+    function isFormValid(){
+        isValid = true;
+        if(!usernameAvailable) {
+            isValid = false;
+        }
+        //check username field
+        if($("#username").val().length == 0) {
+        
+            $("#usernameError").html("Username is required");
+            isValid = false;
+        }
+        
+        //check matching passwords
+        
+        if($("#password").val()!=$("#passwordAgain").val()) {
+            $("#passwordError").html("Passwords mismatch");
+            isValid = false;
+        }
+        
+        if($("#password").val().length < 6){
+            $("#passwordCheck").html("Password must be atleast 6 characters");
+            isValid = false;
+        }
+        return isValid;
+    }
+    
+    function findStateAbb(){
+        
+          $.ajax({
+                
+                method: "GET",
+                url: "https://cst336.herokuapp.com/projects/api/state_abbrAPI.php",
+                dataType: "json",
+                data: { "state": $("#state").val() },
+                success: function(result,status) {
+                    for(let i =0; i< result.length; i++){
+                        if(result[i].state == $("#state").val())
+                        {
+                            stateAbbIndex = i;
+                            stateAbb = result[i].usps.toLowerCase();
+                            break;
+                        }
+                     
+                     }
+                }
+                
+
+            });
+    }
+    
+ });
+
+
+
+
+</script>
+</head>
+<body>
+    
+
+<h1> Sign Up Form </h1>
+
+
+
+<form id="signupForm" method= "get" action="welcome.html">
+<!-- Page will be reloaded-->
+<fieldset>
+<legend>Sign Up</legend>
+First Name: <input type="text"><br> 
+Last Name: <input type="text"><br> 
+Gender: <input type="radio" name="gender" value="m"> Male
+        <input type="radio" name="gender" value="f"> Female <br><br>
+        
+Email: <input type="text"><br> 
+Phone Number:<input type="text"><br><br>
+Zip Code: <input type="text" name= "zipCode" id = "zipCode"><br>
+City: <span id="city"></span> 
+<br>
+Latitude: <span id="latitude"></span>
+<br>
+Longitude: <span id="longitude"></span>
+<br><br>
+State: 
+<select id = "state">
+    <option value="so"> Select one </option>
+    <!--<option value="ca"> California </option>-->
+    <!--<option value="ny"> New York </option>-->
+    <!--<option value="tx"> Texas </option>-->
+</select>
+
+<br><br>
+Testing state abb: <span id ="stateAb"></span>
+<br><br>
+Select a County: <select id = "county"> </select><br>
+
+Desired Username: <input type="text" id="username"><span id ="usernameError"></span><br>
+Password: <input type="password" id="password"><span id="passwordCheck"></span><br> 
+Type Password Again: <input type="password" id="passwordAgain"><span id="passwordError"></span><br>
+<input type="submit" value="Sign up!">
+</fieldset>
+</form>
+
+</body>
+</html>
